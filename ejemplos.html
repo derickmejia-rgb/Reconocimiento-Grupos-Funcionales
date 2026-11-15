@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ejemplos guiados · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"><style>
+.sel{display:flex;flex-wrap:wrap;gap:.4rem;margin:.5rem 0 1rem}
+.sel button.act{background:var(--O)}
+.pasos li .r{font-family:var(--mono);font-weight:700;margin-left:.3rem}
+.pasos li .ex{display:block;font-weight:400;color:var(--tinta2);font-size:.92rem}
+</style></head><body><main>
+
+<div class="eti">Módulo 4</div>
+<h1>Ejemplos guiados</h1>
+<p>Estas son las <b>moléculas prediseñadas</b> del constructor <i>Prueba 3</i>. Elige una, obsérvala en 3D y avanza por el árbol pregunta a pregunta. Intenta responder mentalmente antes de pulsar <b>Siguiente pregunta</b>.</p>
+<div class="sel" id="sel"></div>
+<div class="dos">
+ <div>
+  <div class="visor" id="v" style="height:420px"></div>
+  <p style="margin:.6rem 0"><b id="nom"></b> · <span class="formula" id="for"></span></p>
+  <p><button class="btn sec" id="res">✨ Resaltar grupo funcional</button> <button class="btn sec" id="g">⏸ Pausar giro</button></p>
+ </div>
+ <div class="hoja">
+  <div class="eti">Recorrido por el árbol</div>
+  <ol class="pasos" id="pasos"></ol>
+  <p><button class="btn" id="sig">Siguiente pregunta ↓</button> <button class="btn sec" id="rei">↺ Reiniciar</button></p>
+ </div>
+</div>
+<p style="margin-top:1.5rem"><a class="btn sec" href="introduccion.html">← Introducción</a> <a class="btn" href="taller.html">Siguiente: Taller →</a></p>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script>
+<script>
+AVA_ARBOL.nav('ejemplos.html');
+const {NODOS,GRUPOS,ruta}=AVA_ARBOL, {LIB}=AVA_MOL;
+const EXPL={
+ metano:{inicio:'Un carbono central unido a cuatro hidrógenos.',R1:'Solo hay esferas negras y blancas: es un hidrocarburo (rama 1).',H1:'No hay pares de cilindros entre carbonos; de hecho, el metano tiene un solo carbono.',H4:'Tampoco hay enlaces triples: solo enlaces sencillos, con geometría tetraédrica (109,5°). Es un alcano.'},
+ eteno:{inicio:'Dos carbonos, cada uno con dos hidrógenos.',R1:'Solo C e H: es un hidrocarburo (rama 1).',H1:'Entre los dos carbonos hay dos cilindros: un enlace doble C=C.',H2:'Hay un solo enlace doble. Los 6 átomos están en un mismo plano (120°). Es un alqueno.'},
+ etino:{inicio:'Dos carbonos, cada uno con un hidrógeno.',R1:'Solo C e H: es un hidrocarburo (rama 1).',H1:'Entre los carbonos no hay dos cilindros, sino tres.',H4:'Tres cilindros: enlace triple C≡C. Los 4 átomos están alineados (180°). Es un alquino.'},
+ etanol:{inicio:'Dos carbonos con sus hidrógenos.',R1:'Hay una esfera roja: no es un hidrocarburo.',R2:'No hay esferas azules: es un compuesto oxigenado (rama 2).',O1:'El O está unido al C con un solo cilindro: no hay C=O.',O2:'El oxígeno está unido a un H: grupo hidroxilo –OH. Es un alcohol.'},
+};
+const claves=['metano','eteno','etino','etanol','agua'];
+const v=new AVA_MOL.Visor(document.getElementById('v'));
+let actual,pasos,i,res=false;
+const sel=document.getElementById('sel');
+claves.forEach(k=>{const b=document.createElement('button');b.className='btn sec';b.textContent=LIB[k].nombre+' ('+LIB[k].formula+')';b.onclick=()=>cargar(k);b.dataset.k=k;sel.append(b);});
+function cargar(k){
+  actual=k;const d=v.cargar(k);res=false;v.resaltar(false);
+  sel.querySelectorAll('button').forEach(b=>{b.className='btn '+(b.dataset.k===k?'act':'sec');});
+  document.getElementById('nom').textContent=d.nombre;document.getElementById('for').textContent=d.formula;
+  i=0;document.getElementById('pasos').innerHTML='';
+  if(d.grupo==='inorganico'){pasos=[];document.getElementById('sig').disabled=true;
+    document.getElementById('pasos').innerHTML='<li class="hoja-final">Contraejemplo: el agua no tiene carbono, así que no es un compuesto orgánico y no se analiza con el árbol. El árbol de decisiones se aplica solo a moléculas orgánicas.</li>';return;}
+  pasos=ruta(d.grupo);document.getElementById('sig').disabled=false;
+}
+document.getElementById('sig').onclick=()=>{
+  const ol=document.getElementById('pasos');
+  if(i<pasos.length){const p=pasos[i++],n=NODOS[p.nodo];
+    ol.insertAdjacentHTML('beforeend',`<li class="${p.resp}">${n.q}<span class="r ${p.resp==='si'?'ok':'mal'}">${p.resp==='si'?'SÍ':'NO'}</span><span class="ex">${EXPL[actual][p.nodo]||n.pista}</span></li>`);}
+  if(i>=pasos.length){const g=GRUPOS[LIB[actual].grupo];
+    ol.insertAdjacentHTML('beforeend',`<li class="hoja-final">Conclusión: ${g.nombre}${g.rama?' · patrón '+g.patron:''}</li>`);
+    document.getElementById('sig').disabled=true;if(g.rama){res=true;v.resaltar(true);}}
+};
+document.getElementById('rei').onclick=()=>cargar(actual);
+document.getElementById('res').onclick=()=>{res=!res;v.resaltar(res);};
+let on=true;document.getElementById('g').onclick=e=>{on=!on;v.girar(on);e.target.textContent=on?'⏸ Pausar giro':'▶ Reanudar giro';};
+cargar('metano');
+</script></body></html>

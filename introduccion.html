@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Introducción · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"><style>
+.cols{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:1rem}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+.col{background:#fffdf7;border:1px solid var(--linea);border-radius:4px;padding:.8rem}
+.col>h3{margin:0 0 .6rem;color:#fff;padding:.35rem .6rem;border-radius:3px;font-family:var(--mono);font-size:.95rem}
+.col.hc>h3{background:var(--hc)} .col.ox>h3{background:var(--ox)} .col.ni>h3{background:var(--ni)}
+.q{border:1.5px solid var(--tinta);border-radius:4px;padding:.45rem .55rem;font-size:.93rem;background:#fff}
+.rm{margin:.3rem 0 .3rem .7rem;padding-left:.6rem;border-left:2px dashed var(--linea)}
+.rm .t{font-family:var(--mono);font-size:.75rem;font-weight:700}
+.rm .t.s{color:var(--ok)} .rm .t.n{color:var(--mal)}
+.hj{display:inline-block;margin:.2rem 0;padding:.25rem .6rem;border-radius:20px;color:#fff;font-family:var(--mono);font-size:.82rem;cursor:pointer;border:none}
+.hj.hc{background:var(--hc)} .hj.ox{background:var(--ox)} .hj.ni{background:var(--ni)}
+.raiz{max-width:720px;margin:0 auto 1rem;text-align:center}
+.raiz .q{display:inline-block}
+.flecha{font-family:var(--mono);color:var(--tinta2);text-align:center;margin:.3rem 0 .8rem}
+#ficha{position:sticky;bottom:0}
+</style></head><body><main>
+
+<div class="eti">Módulo 3</div>
+<h1>Introducción: el árbol de decisiones</h1>
+<div class="hoja">
+ <p>Un <b>grupo funcional</b> es un átomo o conjunto de átomos unidos de forma característica que confiere propiedades químicas propias a la molécula. Para reconocerlo no hace falta memorizar cientos de estructuras: basta con hacerse las preguntas correctas <b>en el orden correcto</b>.</p>
+ <p>La primera decisión es si la molécula contiene <b>únicamente carbono e hidrógeno</b>. Si es así, es un <b>hidrocarburo</b> y se observan sus enlaces entre carbonos: si tiene <b>un</b> enlace doble es un alqueno; si tiene <b>varios</b> que forman un <b>anillo de seis carbonos conjugado</b> es un aromático; si no tiene dobles pero sí un triple, es un alquino; y si solo tiene enlaces sencillos, es un alcano.</p>
+ <p>Si la molécula tiene otros átomos, se busca primero el <b>nitrógeno</b>: con nitrógeno es un compuesto <b>nitrogenado</b> (nitrilo, amida o amina), aunque también tenga oxígeno. Sin nitrógeno es un compuesto <b>oxigenado</b>, y se observa cómo está unido el oxígeno al carbono: con <b>enlace sencillo C–O</b> (alcohol y éter) o con <b>enlace doble C=O</b> (aldehído, cetona, éster y ácido carboxílico).</p>
+ <p>En cada pregunta solo hay dos salidas, sí o no, y la primera respuesta afirmativa conduce al grupo funcional.</p>
+</div>
+
+<h2>El árbol completo</h2>
+<p>Haz clic en cualquier hoja de color para ver la ficha del grupo funcional.</p>
+<div class="flecha"><b>1.</b> ¿La molécula contiene únicamente C e H? <span class="ok">Sí → rama 1</span> · <span class="mal">No</span> → ¿Contiene nitrógeno? <span class="ok">Sí → rama 3</span> · <span class="mal">No → rama 2</span></div>
+<div class="cols">
+ <div class="col hc"><h3>Rama 1 · Hidrocarburos</h3><div id="c-hc"></div></div>
+ <div class="col ox"><h3>Rama 2 · Oxigenados</h3><div class="q" id="q-ox"></div>
+   <div class="rm"><span class="t n">NO → Enlace sencillo C–O</span><div id="c-ox1"></div></div>
+   <div class="rm"><span class="t s">SÍ → Enlace doble C=O</span><div id="c-ox2"></div></div></div>
+ <div class="col ni"><h3>Rama 3 · Nitrogenados</h3><div id="c-ni"></div></div>
+</div>
+
+<div id="ficha" class="aviso info" style="margin-top:1rem">Selecciona una hoja del árbol para ver su patrón, fórmula general y terminación IUPAC.</div>
+
+<h2>Resumen de patrones</h2>
+<div style="overflow-x:auto"><table class="tabla" id="tab"><thead><tr><th>Rama</th><th>Grupo</th><th>Patrón a buscar</th><th>Fórmula general</th><th>Nomenclatura</th><th>Ejemplo (≤ 3 C)</th></tr></thead><tbody></tbody></table></div>
+<p style="margin-top:1.5rem"><a class="btn sec" href="objetivos.html">← Objetivos</a> <a class="btn" href="ejemplos.html">Siguiente: Ejemplos guiados →</a></p>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script>
+<script>
+AVA_ARBOL.nav('introduccion.html');
+const {NODOS,GRUPOS,RAMAS,esHoja}=AVA_ARBOL;
+function bloque(id){
+  if(esHoja(id)){const g=GRUPOS[id];return `<button class="hj ${g.rama}" data-g="${id}">${g.nombre}</button>`;}
+  const n=NODOS[id];
+  return `<div class="q">${n.q.replace(/^\[[^\]]+\]\s*/,'')}</div>
+   <div class="rm"><span class="t s">SÍ →</span> ${bloque(n.si)}</div>
+   <div class="rm"><span class="t n">NO →</span> ${bloque(n.no)}</div>`;
+}
+document.getElementById('c-hc').innerHTML=bloque('H1');
+document.getElementById('q-ox').textContent=NODOS.O1.q;
+document.getElementById('c-ox1').innerHTML=bloque('O2');
+document.getElementById('c-ox2').innerHTML=bloque('O3');
+document.getElementById('c-ni').innerHTML=bloque('N1');
+document.querySelectorAll('.hj').forEach(b=>b.onclick=()=>{const g=GRUPOS[b.dataset.g];
+  document.getElementById('ficha').innerHTML=`<b>${g.nombre}</b> (${RAMAS[g.rama]}) · Patrón: <span class="formula">${g.patron}</span> · Fórmula general: <span class="formula">${g.general}</span> · Nomenclatura: <span class="formula">${g.sufijo}</span> · Ejemplo: <i>${g.ej}</i>`;});
+const tb=document.querySelector('#tab tbody');
+Object.entries(GRUPOS).filter(([k])=>k!=='inorganico').forEach(([k,g])=>{
+  tb.insertAdjacentHTML('beforeend',`<tr><td><span class="chip ${g.rama}">${RAMAS[g.rama]}</span></td><td><b>${g.nombre}</b></td><td class="formula" style="background:none">${g.patron}</td><td>${g.general}</td><td>${g.sufijo}</td><td>${g.ej}</td></tr>`);});
+</script></body></html>

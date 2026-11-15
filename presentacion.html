@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Presentación · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"></head><body><main>
+
+<div class="eti">Módulo 1</div>
+<h1>Presentación</h1>
+<div class="dos">
+ <div class="hoja">
+  <p>Reconocer un grupo funcional es, ante todo, <strong>reconocer un patrón</strong>: una combinación particular de átomos y tipos de enlace que se repite en muchas moléculas y que determina buena parte de su reactividad y de su nombre.</p>
+  <p>La dificultad habitual no está en memorizar los nombres, sino en saber <em>qué mirar primero</em>. Por eso este ambiente virtual organiza el reconocimiento como un diagrama secuencial en forma de árbol, con preguntas de sí/no en las que cada una se fija en un solo rasgo que puedes ver en la molécula. Si respondes cada pregunta observando la molécula, llegarás siempre a una única respuesta.</p>
+  <h3>¿Cómo está organizado?</h3>
+  <ol class="pasos">
+   <li><b>Objetivos</b>: lo que se espera que logres.</li>
+   <li><b>Introducción</b>: el árbol completo con sus tres ramas (hidrocarburos, oxigenados, nitrogenados) y la ficha de cada grupo.</li>
+   <li><b>Ejemplos guiados</b>: moléculas prediseñadas en 3D recorridas paso a paso por el árbol.</li>
+   <li><b>Taller</b>: 13 moléculas, una por grupo funcional. Tú recorres el árbol.</li>
+   <li><b>Reporte</b>: número total de aciertos y retroalimentación por ejercicio.</li>
+  </ol>
+ </div>
+ <div>
+  <div class="visor" id="v"></div>
+  <div class="hoja" style="margin-top:1rem">
+   <h3 style="margin-top:0">Cómo leer los modelos 3D</h3>
+   <p>Modelo de <b>bolas y varillas</b>: <span><i class="pt" style="background:#303030"></i>C</span> · <span><i class="pt" style="background:#f4f4f4"></i>H</span> · <span><i class="pt" style="background:#e02424"></i>O</span> · <span><i class="pt" style="background:#3050f8"></i>N</span>.</p>
+   <p>Un cilindro = enlace sencillo; dos = doble; tres = triple. La molécula gira como un <b>cuerpo rígido</b>: al arrastrarla solo cambia tu punto de vista, nunca las longitudes ni los ángulos de enlace (109,5° en sp³, 120° en sp², 180° en sp).</p>
+   <p><button class="btn sec" id="g">⏸ Pausar giro</button></p>
+  </div>
+ </div>
+</div>
+<p style="margin-top:1.5rem"><a class="btn" href="objetivos.html">Siguiente: Objetivos →</a></p>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script>
+<script>AVA_ARBOL.nav('presentacion.html');const v=new AVA_MOL.Visor(document.getElementById('v'));v.cargar('etanol');
+let on=true;document.getElementById('g').onclick=e=>{on=!on;v.girar(on);e.target.textContent=on?'⏸ Pausar giro':'▶ Reanudar giro';};</script>
+</body></html>

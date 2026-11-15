@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Prueba final · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"></head><body data-tipo="post"><main>
+
+<div class="eti">Después de la intervención</div>
+<h1>Prueba final</h1>
+
+<section id="s-hecha" class="hoja oculto">
+ <p id="hecha-txt"></p>
+ <p><button class="btn" id="hecha-btn">⬇ Descargar de nuevo mi archivo</button> <a class="btn sec" href="informe.html">Ver Mi informe →</a></p>
+</section>
+
+<section id="s-bloq" class="hoja oculto">
+ <div class="eti">Secuencia del estudio</div>
+ <p id="bloq-txt"></p>
+ <div id="bloq-acc"></div>
+</section>
+
+<section id="s-datos" class="hoja oculto">
+ <p>Ahora que terminaste la intervención, presentarás <b>las mismas 13 moléculas</b> de la prueba inicial, en otro orden y con otra orientación. Responde sin consultar los módulos. Al terminar podrás ver la comparación en <i>Mi informe</i> y descargar el PDF.</p>
+ <div class="dos" style="margin-top:1rem">
+  <div>
+   <label class="lbl" for="id">Código de estudiante (el mismo en ambas pruebas)</label>
+   <input id="id" class="campo" autocomplete="off" placeholder="Ej.: 20251234">
+   <label class="lbl" for="grupo">Grupo o curso (opcional)</label>
+   <input id="grupo" class="campo" autocomplete="off" placeholder="Ej.: Orgánica I – G1">
+  </div>
+  <div class="aviso info" style="margin:0">
+   <b>Consentimiento informado.</b> Tus respuestas se usarán en un estudio de investigación educativa sobre el uso de este AVA. Se identifican solo con tu código, se reportan de forma agregada y no afectan tu calificación. Participar es voluntario.
+   <label style="display:block;margin-top:.6rem"><input type="checkbox" id="consent" checked> Acepto que mis respuestas se usen con fines de investigación.</label>
+  </div>
+ </div>
+ <p style="margin-top:1rem"><button class="btn" id="empezar">Comenzar prueba final →</button>
+  <label id="imp-pre" class="btn sec" style="cursor:pointer;display:none">📂 Ya la presenté en otro equipo: cargar mi archivo<input type="file" id="imp" accept=".json,application/json" hidden></label></p>
+</section>
+
+<section id="s-prueba" class="oculto">
+ <div class="barra-prog"><div id="prog" style="width:0"></div></div>
+ <p class="eti" style="margin-top:.5rem">Molécula <span id="num"></span> de 13 · Prueba final</p>
+ <div class="dos">
+  <div>
+   <div class="visor" id="v" style="height:440px"></div>
+   <p style="margin:.6rem 0">Fórmula molecular: <span class="formula" id="for"></span></p>
+  </div>
+  <div class="hoja">
+   <p class="pregunta">¿A qué grupo funcional pertenece esta molécula?</p>
+   <div class="opciones" id="ops"></div>
+   <p><button class="btn" id="sig" disabled>Siguiente →</button></p>
+   <p class="eti">Gira la molécula para observar todos sus enlaces antes de responder.</p>
+  </div>
+ </div>
+</section>
+
+<section id="s-fin" class="hoja oculto">
+ <h2 style="margin-top:0">Prueba final registrada</h2>
+ <p class="pregunta" id="fin-txt"></p>
+ <div class="aviso info">Guarda el archivo <b>.json</b> y entrégalo a tu docente (por correo o plataforma). Es tu respaldo y es el dato que se usa en el estudio.</div>
+ <p id="fin-acc"></p>
+</section>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script><script src="../js/instrumento.js"></script><script src="../js/prueba.js"></script>
+</body></html>

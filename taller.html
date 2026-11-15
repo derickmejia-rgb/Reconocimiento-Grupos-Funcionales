@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Taller · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"><style>
+.hist{font-family:var(--mono);font-size:.8rem;color:var(--tinta2);margin:.3rem 0 .8rem}
+.hist span{display:inline-block;margin:.1rem .25rem .1rem 0;padding:.05rem .4rem;border-radius:3px;background:var(--papel2)}
+.rama{float:right}
+</style></head><body><main>
+
+<div class="eti">Módulo 5</div>
+<h1>Taller de prueba</h1>
+
+<section id="ini" class="hoja">
+ <p>Encontrarás <b>13 moléculas</b>, una por cada grupo funcional, con cadenas de máximo tres carbonos, sin sustituyentes y con un único grupo funcional (el benceno es la única excepción, porque el anillo aromático más simple tiene seis carbonos).</p>
+ <p>Para cada molécula debes <b>recorrer el árbol de decisiones</b> respondiendo Sí o No. Cuando llegues a una hoja, confirma tu clasificación. Puedes usar la pista o retroceder antes de confirmar; una vez confirmada, la respuesta queda registrada.</p>
+ <p><label>Nombre o código del estudiante: <input id="nombre" class="campo" style="max-width:320px"></label></p>
+ <p><button class="btn" id="empezar">Comenzar taller →</button></p>
+</section>
+
+<section id="ej" class="oculto">
+ <div class="barra-prog"><div id="prog" style="width:0"></div></div>
+ <p class="eti" style="margin-top:.5rem">Ejercicio <span id="num"></span> de 13 · Aciertos: <span id="ac">0</span></p>
+ <div class="dos">
+  <div>
+   <div class="visor" id="v" style="height:420px"></div>
+   <p style="margin:.6rem 0">Fórmula molecular: <span class="formula" id="for"></span> <span id="nota" class="eti"></span></p>
+   <p><button class="btn sec" id="g">⏸ Pausar giro</button></p>
+  </div>
+  <div class="hoja">
+   <div id="fase-q">
+    <div class="eti">Pregunta del árbol <span id="ramaq" class="rama"></span></div>
+    <p class="pregunta" id="preg"></p>
+    <div class="hist" id="hist"></div>
+    <p><button class="btn si" id="bsi">Sí</button> <button class="btn no" id="bno">No</button>
+       <button class="btn sec" id="batras">← Retroceder</button> <button class="btn sec" id="bpista">💡 Pista</button></p>
+    <div id="pista" class="aviso info oculto"></div>
+   </div>
+   <div id="fase-h" class="oculto">
+    <div class="eti">Llegaste a una hoja del árbol</div>
+    <p class="pregunta">Tu clasificación: <b id="miresp"></b></p>
+    <p><button class="btn" id="bconf">✔ Confirmar respuesta</button> <button class="btn sec" id="breini">↺ Recorrer de nuevo</button></p>
+   </div>
+   <div id="fase-f" class="oculto">
+    <div id="fb"></div>
+    <ol class="pasos" id="rutaok"></ol>
+    <p><button class="btn" id="bsig">Siguiente molécula →</button></p>
+   </div>
+  </div>
+ </div>
+</section>
+
+<section id="fin" class="oculto hoja">
+ <h2 style="margin-top:0">¡Taller terminado!</h2>
+ <p class="pregunta" id="resfin"></p>
+ <p><a class="btn" href="reporte.html">Ver reporte del taller →</a> <a class="btn sec" href="prueba-final.html">Ir a la Prueba final →</a> <button class="btn sec" id="otra">↺ Repetir taller</button></p>
+</section>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script>
+<script>
+AVA_ARBOL.nav('taller.html');
+const {NODOS,GRUPOS,RAMAS,esHoja,ruta,guardar,leer}=AVA_ARBOL,{LIB}=AVA_MOL;
+const BANCO=['propano','propeno','propino','benceno','propanol','metoxietano','propanal','propanona','propanoico','etanoatometilo','propilamina','propanamida','propanonitrilo'];
+const $=id=>document.getElementById(id);
+const pre=leer('pre'); if(pre) $('nombre').value=pre.id;
+let orden,k,nodo,camino,resultados,nombre,v;
+function barajar(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]];}return a;}
+$('empezar').onclick=()=>{
+  nombre=$('nombre').value.trim()||'Estudiante';
+  orden=barajar(BANCO);k=0;resultados=[];
+  $('ini').classList.add('oculto');$('fin').classList.add('oculto');$('ej').classList.remove('oculto');
+  if(!v)v=new AVA_MOL.Visor($('v'));
+  mostrar();
+};
+$('otra').onclick=()=>{$('fin').classList.add('oculto');$('ini').classList.remove('oculto');};
+function mostrar(){
+  const d=v.cargar(orden[k]);v.resaltar(false);
+  $('num').textContent=k+1;$('prog').style.width=(k/13*100)+'%';
+  $('for').textContent=d.formula;$('nota').textContent=d.nota?'· '+d.nota:'';
+  $('ac').textContent=resultados.filter(r=>r.acierto).length;
+  nodo='inicio';camino=[];fase('q');pintar();
+}
+function fase(f){['q','h','f'].forEach(x=>$('fase-'+x).classList.toggle('oculto',x!==f));}
+function pintar(){
+  if(esHoja(nodo)){fase('h');$('miresp').textContent=GRUPOS[nodo].nombre;return;}
+  fase('q');const n=NODOS[nodo];$('preg').textContent=n.q;
+  $('ramaq').innerHTML=n.rama?`<span class="chip ${n.rama}">${RAMAS[n.rama]}</span>`:'';
+  $('hist').innerHTML=camino.map((p,i)=>`<span>Pregunta ${i+1}: ${p.resp==='si'?'Sí':'No'}</span>`).join('');
+  $('batras').disabled=!camino.length;$('pista').classList.add('oculto');
+}
+function responder(r){camino.push({nodo,resp:r});nodo=NODOS[nodo][r];pintar();}
+$('bsi').onclick=()=>responder('si');$('bno').onclick=()=>responder('no');
+$('batras').onclick=()=>{const p=camino.pop();if(p){nodo=p.nodo;pintar();}};
+$('breini').onclick=()=>{nodo='inicio';camino=[];pintar();};
+$('bpista').onclick=()=>{$('pista').textContent=NODOS[nodo].pista;$('pista').classList.remove('oculto');};
+$('bconf').onclick=()=>{
+  const d=LIB[orden[k]],ok=nodo===d.grupo;
+  resultados.push({clave:orden[k],molecula:d.nombre,formula:d.formula,correcto:d.grupo,respuesta:nodo,acierto:ok,camino:camino.slice()});
+  $('ac').textContent=resultados.filter(r=>r.acierto).length;
+  $('fb').innerHTML=ok?`<div class="aviso bien">✅ <b>¡Correcto!</b> ${d.nombre} es un(a) <b>${GRUPOS[d.grupo].nombre}</b>. Patrón: <span class="formula">${GRUPOS[d.grupo].patron}</span></div>`
+    :`<div class="aviso malo">❌ Respondiste <b>${GRUPOS[nodo].nombre}</b>, pero ${d.nombre} es un(a) <b>${GRUPOS[d.grupo].nombre}</b> (<span class="formula">${GRUPOS[d.grupo].patron}</span>). Revisa el recorrido correcto:</div>`;
+  const rc=ruta(d.grupo);
+  $('rutaok').innerHTML=rc.map(p=>{const mio=camino.find(c=>c.nodo===p.nodo);const bad=mio&&mio.resp!==p.resp;
+    return `<li class="${p.resp}">${NODOS[p.nodo].q} <b class="${p.resp==='si'?'ok':'mal'}">${p.resp==='si'?'SÍ':'NO'}</b>${bad?' <i class="mal">(tú: '+(mio.resp==='si'?'Sí':'No')+')</i>':''}</li>`;}).join('')+`<li class="hoja-final">${GRUPOS[d.grupo].nombre}</li>`;
+  v.resaltar(true);fase('f');
+  $('bsig').textContent=k<12?'Siguiente molécula →':'Terminar y ver resultados →';
+};
+$('bsig').onclick=()=>{k++;if(k<13)mostrar();else terminar();};
+function terminar(){
+  $('prog').style.width='100%';
+  const ac=resultados.filter(r=>r.acierto).length;
+  guardar('taller',{nombre,fecha:new Date().toLocaleString('es-CO'),fechaISO:new Date().toISOString(),aciertos:ac,total:13,items:resultados});
+  $('ej').classList.add('oculto');$('fin').classList.remove('oculto');
+  $('resfin').innerHTML=`${nombre}, obtuviste <b>${ac} aciertos de 13</b> (${Math.round(ac/13*100)} %).`;
+}
+let on=true;$('g').onclick=e=>{on=!on;v&&v.girar(on);e.target.textContent=on?'⏸ Pausar giro':'▶ Reanudar giro';};
+</script></body></html>

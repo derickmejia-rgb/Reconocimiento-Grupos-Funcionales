@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reporte del taller · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"><style>
+.marcador{display:flex;align-items:baseline;gap:1rem;flex-wrap:wrap}
+.marcador .n{font-size:5rem;font-weight:700;line-height:1;color:var(--O)}
+.marcador .n small{font-size:2rem;color:var(--tinta)}
+.ramas{display:grid;grid-template-columns:repeat(3,1fr);gap:.8rem;margin:1rem 0}
+@media(max-width:700px){.ramas{grid-template-columns:1fr}}
+.ramas div{border:1px solid var(--linea);border-radius:4px;padding:.7rem;background:#fffdf7}
+</style></head><body><main>
+
+<div class="eti">Módulo 6</div>
+<h1>Reporte de evaluación del taller</h1>
+<div id="vacio" class="aviso info" style="display:none">Aún no hay resultados guardados. Realiza el <a href="taller.html">taller de prueba</a> para generar tu reporte.</div>
+<div id="rep" style="display:none">
+ <div class="hoja">
+  <div class="eti" id="quien"></div>
+  <div class="marcador"><div class="n" id="tot"></div><div><div class="pregunta" style="margin:0">aciertos en total</div><div id="pct" class="eti"></div></div></div>
+  <div class="barra-prog" style="margin-top:.8rem"><div id="bar"></div></div>
+  <p id="msg" style="margin-top:1rem"></p>
+ </div>
+ <h2>Desempeño por rama del árbol</h2>
+ <div class="ramas" id="ramas"></div>
+ <h2>Detalle por ejercicio</h2>
+ <div style="overflow-x:auto"><table class="tabla"><thead><tr><th>#</th><th>Molécula</th><th>Fórmula</th><th>Tu respuesta</th><th>Respuesta correcta</th><th>Resultado</th></tr></thead><tbody id="tb"></tbody></table></div>
+ <p class="noimp" style="margin-top:1.5rem"><a class="btn" href="prueba-final.html">Siguiente: Prueba final →</a> <a class="btn sec" href="taller.html">↺ Repetir taller</a></p>
+</div>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script>
+<script>
+AVA_ARBOL.nav('reporte.html');
+const {GRUPOS,RAMAS,leer}=AVA_ARBOL;
+const r=leer('taller');
+if(!r){document.getElementById('vacio').style.display='block';}
+else{
+  document.getElementById('rep').style.display='block';
+  const p=Math.round(r.aciertos/r.total*100);
+  document.getElementById('quien').textContent=r.nombre+' · '+r.fecha;
+  document.getElementById('tot').innerHTML=r.aciertos+'<small> / '+r.total+'</small>';
+  document.getElementById('pct').textContent=p+' % de efectividad';
+  document.getElementById('bar').style.width=p+'%';
+  document.getElementById('msg').innerHTML= p>=90?'<b>Excelente.</b> Reconoces con seguridad los patrones de los 13 grupos funcionales.'
+   : p>=70?'<b>Buen desempeño.</b> Revisa los ejercicios fallados y vuelve a los ejemplos guiados de esa rama.'
+   : p>=50?'<b>Desempeño aceptable.</b> Repasa el árbol en la Introducción, especialmente el orden de las preguntas y los grupos con C=O.'
+   : '<b>Necesitas reforzar.</b> Vuelve a la Introducción y a los Ejemplos guiados antes de repetir el taller.';
+  const cont={hc:[0,0],ox:[0,0],ni:[0,0]};
+  r.items.forEach(it=>{const ra=GRUPOS[it.correcto].rama;cont[ra][1]++;if(it.acierto)cont[ra][0]++;});
+  document.getElementById('ramas').innerHTML=Object.keys(cont).map(k=>`<div><span class="chip ${k}">${RAMAS[k]}</span><p class="pregunta" style="margin:.4rem 0 0">${cont[k][0]} / ${cont[k][1]}</p></div>`).join('');
+  document.getElementById('tb').innerHTML=r.items.map((it,i)=>`<tr><td>${i+1}</td><td>${it.molecula}</td><td class="formula" style="background:none">${it.formula}</td><td>${GRUPOS[it.respuesta].nombre}</td><td>${GRUPOS[it.correcto].nombre}</td><td class="${it.acierto?'ok':'mal'}">${it.acierto?'✔ Acierto':'✘ Error'}</td></tr>`).join('');
+}
+</script></body></html>

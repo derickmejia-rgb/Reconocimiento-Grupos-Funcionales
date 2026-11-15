@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Panel docente · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"></head><body><main>
+
+<div class="eti">Investigación · uso del docente</div>
+<h1>Panel docente: análisis de la cohorte</h1>
+<div class="dos">
+ <div class="hoja">
+  <h3 style="margin-top:0">1. Datos del estudio (aparecen en el PDF)</h3>
+  <label class="lbl" for="m-titulo">Título</label><input id="m-titulo" class="campo" value="Efecto de un AVA basado en un árbol de decisiones sobre el reconocimiento de grupos funcionales: estudio exploratorio pretest–postest">
+  <label class="lbl" for="m-autores">Autores</label><input id="m-autores" class="campo" placeholder="Apellido, N.; Apellido, N.">
+  <label class="lbl" for="m-institucion">Institución</label><input id="m-institucion" class="campo" value="Fundación Universitaria Salesiana">
+  <div class="dos" style="gap:.6rem">
+   <div><label class="lbl" for="m-programa">Programa</label><input id="m-programa" class="campo" value="Licenciatura en Química"></div>
+   <div><label class="lbl" for="m-curso">Curso</label><input id="m-curso" class="campo" placeholder="Química Orgánica"></div>
+   <div><label class="lbl" for="m-cohorte">Cohorte / grupo</label><input id="m-cohorte" class="campo" placeholder="2026-2"></div>
+   <div><label class="lbl" for="m-periodo">Periodo de aplicación</label><input id="m-periodo" class="campo" placeholder="semanas 10 a 12"></div>
+  </div>
+ </div>
+ <div class="hoja">
+  <h3 style="margin-top:0">2. Archivos de los estudiantes</h3>
+  <div class="zona" id="zona">Arrastra aquí los archivos <b>.json</b> de los estudiantes<br><span class="eti">o haz clic para elegirlos (puedes seleccionar varios)</span><input type="file" id="arch" accept=".json,application/json" multiple hidden></div>
+  <p id="estado" class="eti" style="margin-top:.6rem">Sin archivos cargados.</p>
+  <p><button class="btn sec" id="demo">Cargar datos de demostración (simulados)</button> <button class="btn sec" id="limpiar">Limpiar</button></p>
+  <div id="aviso-demo" class="aviso malo oculto"><b>Datos simulados.</b> Sirven solo para ver cómo luce el informe. El PDF los marca como simulados y <b>no deben presentarse como resultados</b>.</div>
+ </div>
+</div>
+
+<section id="res" class="oculto">
+ <h2>3. Resultados</h2>
+ <div class="kpis" id="kpis"></div>
+ <div id="flujo" class="aviso info"></div>
+ <div class="dos">
+  <div class="hoja"><h3 style="margin-top:0">Contraste final – inicial</h3><table class="tabla" id="t-inf"></table></div>
+  <div class="hoja"><h3 style="margin-top:0">Exportar</h3>
+   <p><button class="btn" id="b-pdf">⬇ Informe de cohorte (PDF)</button></p>
+   <p><button class="btn sec" id="b-largo">⬇ CSV formato largo (una fila por ítem)</button></p>
+   <p><button class="btn sec" id="b-ancho">⬇ CSV formato ancho (una fila por estudiante)</button></p>
+   <p class="eti">Los CSV usan coma como separador y punto decimal (listos para R: read.csv).</p>
+  </div>
+ </div>
+ <h2>Participantes</h2>
+ <div style="overflow-x:auto"><table class="tabla" id="t-part"></table></div>
+ <h2>Vista previa del informe</h2>
+ <iframe class="pdf" id="prev" title="Vista previa del informe de cohorte"></iframe>
+</section>
+
+<h2>Protocolo sugerido de aplicación</h2>
+<ol class="pasos">
+ <li><b>Sesión 1 (15–20 min):</b> presentar el estudio y el consentimiento; cada estudiante presenta la <i>Prueba inicial</i> y entrega su archivo <code>GF_código_inicial.json</code>.</li>
+ <li><b>Intervención:</b> módulos 1 a 6 (presentación, objetivos, árbol, ejemplos guiados, taller y reporte). El AVA registra el tiempo de uso de cada módulo en el navegador.</li>
+ <li><b>Sesión final (15–20 min):</b> <i>Prueba final</i> con el mismo código; cada estudiante entrega <code>GF_código_inicial-final.json</code> y descarga su informe PDF.</li>
+ <li><b>Análisis:</b> cargar todos los archivos en este panel, revisar exclusiones y descargar el informe de cohorte y los CSV.</li>
+</ol>
+<p class="eti">Configuración (modo estudio, clave docente, rangos de nivel): archivo js/config.js</p>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script>
+<script src="../js/instrumento.js"></script><script src="../js/estadistica.js"></script><script src="../lib/jspdf.umd.min.js"></script><script src="../js/logos.js"></script><script src="../js/informes-pdf.js"></script><script>
+AVA_ARBOL.nav('docente.html');
+const {GRUPOS}=AVA_ARBOL,{INSTRUMENTO,validar,firmar,descargar}=AVA_INST,E=AVA_EST,{LIB}=AVA_MOL;
+const $=id=>document.getElementById(id);
+const CAMPOS=['titulo','autores','institucion','programa','curso','cohorte','periodo'];
+try{const m=JSON.parse(localStorage.getItem('ava_gf_meta')||'null');if(m)CAMPOS.forEach(c=>{if(m[c]!=null)$('m-'+c).value=m[c];});}catch(e){}
+CAMPOS.forEach(c=>$('m-'+c).oninput=()=>{try{localStorage.setItem('ava_gf_meta',JSON.stringify(meta()));}catch(e){}});
+const meta=()=>Object.fromEntries(CAMPOS.map(c=>[c,$('m-'+c).value.trim()]));
+
+let archivos=0,brutos=[],simulado=false,ultimo=null;
+
+/* ---------- Carga de archivos ---------- */
+$('zona').onclick=()=>$('arch').click();
+$('arch').onchange=e=>leerArchivos(e.target.files);
+['dragover','dragenter'].forEach(ev=>$('zona').addEventListener(ev,e=>{e.preventDefault();$('zona').classList.add('sobre');}));
+['dragleave','drop'].forEach(ev=>$('zona').addEventListener(ev,e=>{e.preventDefault();$('zona').classList.remove('sobre');}));
+$('zona').addEventListener('drop',e=>leerArchivos(e.dataTransfer.files));
+function leerArchivos(fl){
+  if(simulado){brutos=[];archivos=0;simulado=false;$('aviso-demo').classList.add('oculto');}
+  Promise.all([...fl].map(f=>f.text().then(t=>{try{const d=JSON.parse(t);return Array.isArray(d)?d:[d];}catch(e){return [{app:'?',_archivo:f.name}];}})))
+   .then(listas=>{archivos+=listas.length;listas.forEach(l=>brutos.push(...l));procesar();});
+}
+$('limpiar').onclick=()=>{brutos=[];archivos=0;simulado=false;$('aviso-demo').classList.add('oculto');$('res').classList.add('oculto');$('estado').textContent='Sin archivos cargados.';};
+
+/* ---------- Depuración y emparejamiento ---------- */
+function procesar(){
+  const fl={archivos,registros:brutos.length,invalidos:0,sinConsent:0,duplicados:0,pre:0,post:0,soloPre:0,soloPost:0};
+  const vistos=new Set(),porId={};
+  brutos.slice().sort((a,b)=>String(a.fin).localeCompare(String(b.fin))).forEach(r=>{
+    const firmaVista=r&&r.firma&&vistos.has(r.firma);
+    if(firmaVista)return; // el mismo registro en dos archivos (p. ej. inicial e inicial-final)
+    if(validar(r).length){fl.invalidos++;return;}
+    vistos.add(r.firma);
+    if(!r.consentimiento){fl.sinConsent++;return;}
+    porId[r.id]=porId[r.id]||{};
+    if(porId[r.id][r.tipo]){fl.duplicados++;return;}
+    porId[r.id][r.tipo]=r;fl[r.tipo]++;
+  });
+  const pares=[];
+  Object.entries(porId).forEach(([id,o])=>{if(o.pre&&o.post)pares.push({id,pre:o.pre,post:o.post});else if(o.pre)fl.soloPre++;else fl.soloPost++;});
+  $('estado').textContent=`${archivos} archivo(s) · ${brutos.length} registro(s) · ${pares.length} estudiante(s) con ambas pruebas.`;
+  ultimo={pares,fl,porId};
+  if(pares.length<2){$('res').classList.add('oculto');if(brutos.length)$('estado').textContent+=' Se necesitan al menos 2 estudiantes con ambas pruebas para el análisis.';return;}
+  mostrar();
+}
+
+function mostrar(){
+  const {pares,fl,porId}=ultimo, A=E.analizar(pares,INSTRUMENTO,(window.AVA_CONFIG||{}).NIVELES,GRUPOS);
+  ultimo.A=A;
+  const F=(x,d=2)=>isNaN(x)?'—':x.toFixed(d).replace('.',','), P=p=>isNaN(p)?'—':p<0.001?'< 0,001':F(p,3);
+  $('res').classList.remove('oculto');
+  $('kpis').innerHTML=`<div><b>${A.n}</b><small>Pareados</small></div>
+   <div style="border-left:5px solid var(--pre)"><b>${F(A.pre.media)}</b><small>Media inicial (DE ${F(A.pre.de)})</small></div>
+   <div style="border-left:5px solid var(--post)"><b>${F(A.post.media)}</b><small>Media final (DE ${F(A.post.de)})</small></div>
+   <div><b>${A.tp.md>0?'+':''}${F(A.tp.md)}</b><small>Diferencia [${F(A.tp.ic[0])}; ${F(A.tp.ic[1])}]</small></div>
+   <div><b>${F(A.dz)}</b><small>d_z de Cohen</small></div><div><b>${F(A.hk.gClase)}</b><small>&lt;g&gt; de Hake · nivel ${A.nivelHake}</small></div>`;
+  $('flujo').innerHTML=`Recibidos ${fl.registros} registros de ${fl.archivos} archivo(s). Válidos: ${fl.pre} iniciales y ${fl.post} finales. Excluidos: <b>${fl.sinConsent}</b> sin consentimiento, <b>${fl.invalidos}</b> con firma o formato no válido, <b>${fl.duplicados}</b> duplicados. Solo inicial: ${fl.soloPre} · solo final: ${fl.soloPost}.`;
+  $('t-inf').innerHTML=`<thead><tr><th>Prueba</th><th class="num">Estimación</th><th class="num">IC95 %</th><th class="num">p</th></tr></thead><tbody>
+   <tr><td>t pareada · t(${A.tp.df}) = ${F(A.tp.t)}</td><td class="num">${F(A.tp.md)}</td><td class="num">[${F(A.tp.ic[0])}; ${F(A.tp.ic[1])}]</td><td class="num">${P(A.tp.p)}</td></tr>
+   <tr><td>Wilcoxon · V = ${F(A.wx.V,1)} (HL)</td><td class="num">${F(A.hl)}</td><td class="num">—</td><td class="num">${P(A.wx.p)}</td></tr>
+   <tr><td>Bootstrap pareado (10 000)</td><td class="num">${F(A.tp.md)}</td><td class="num">[${F(A.bs.ic[0])}; ${F(A.bs.ic[1])}]</td><td class="num">—</td></tr>
+   <tr><td>KR-20 inicial / final</td><td class="num" colspan="3">${F(A.kr20.pre)} / ${F(A.kr20.post)}</td></tr></tbody>`;
+  const filas=Object.entries(porId).sort((a,b)=>a[0].localeCompare(b[0])).map(([id,o])=>{
+    const a=o.pre?o.pre.aciertos:'—',b=o.post?o.post.aciertos:'—',d=o.pre&&o.post?b-a:null;
+    return `<tr><td>${id}</td><td class="num">${a}</td><td class="num">${b}</td><td class="num">${d==null?'—':(d>0?'+':'')+d}</td><td>${o.pre&&o.post?'Pareado':o.pre?'Solo inicial':'Solo final'}</td><td class="num">${o.post&&o.post.intervencion?Math.round(o.post.intervencion.uso_total_s/60):'—'}</td></tr>`;}).join('');
+  $('t-part').innerHTML=`<thead><tr><th>Código</th><th class="num">Inicial</th><th class="num">Final</th><th class="num">Cambio</th><th>Estado</th><th class="num">Uso (min)</th></tr></thead><tbody>${filas}</tbody>`;
+  $('prev').src=URL.createObjectURL(pdf().output('blob'));
+}
+const pdf=()=>AVA_PDF.pdfCohorte(meta(),ultimo.A,ultimo.fl,{simulado});
+$('b-pdf').onclick=()=>pdf().save('Informe_cohorte_GF'+(simulado?'_SIMULADO':'')+'.pdf');
+
+/* ---------- Exportación CSV ---------- */
+const csvCelda=v=>{if(v==null)return '';const s=String(v);return /[",\n]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s;};
+const csv=filas=>'\ufeff'+filas.map(f=>f.map(csvCelda).join(',')).join('\r\n');
+$('b-largo').onclick=()=>{
+  const f=[['id','grupo','medicion','item','molecula','grupo_funcional','rama','ancla','respuesta','correcto','tiempo_ms','posicion','fecha_fin','duracion_s']];
+  ultimo.pares.forEach(p=>['pre','post'].forEach(t=>p[t].items.forEach(it=>f.push([p.id,p[t].grupo,t,it.item,it.molecula,it.grupo,it.rama,it.ancla?1:0,it.respuesta,it.correcto,it.tiempo_ms,it.posicion,p[t].fin,p[t].duracion_s]))));
+  descargar('GF_datos_largo'+(simulado?'_SIMULADO':'')+'.csv',csv(f),'text/csv;charset=utf-8');
+};
+$('b-ancho').onclick=()=>{
+  const ids=INSTRUMENTO.items.map(i=>i.id);
+  const cab=['id','grupo','pre_aciertos','post_aciertos','diferencia','g_hake','pre_hc_pct','pre_ox_pct','pre_ni_pct','post_hc_pct','post_ox_pct','post_ni_pct','taller_completado','taller_aciertos','uso_total_min','pre_duracion_s','post_duracion_s','pre_fecha','post_fecha']
+    .concat(ids.map(i=>'pre_'+i),ids.map(i=>'post_'+i));
+  const pct=(r,k)=>{const it=r.items.filter(x=>x.rama===k);return (100*it.reduce((s,x)=>s+x.correcto,0)/it.length).toFixed(1);};
+  const f=[cab].concat(ultimo.pares.map(p=>{const iv=p.post.intervencion||{};const g=p.pre.aciertos<13?((p.post.aciertos-p.pre.aciertos)/(13-p.pre.aciertos)).toFixed(4):'';
+    return [p.id,p.pre.grupo,p.pre.aciertos,p.post.aciertos,p.post.aciertos-p.pre.aciertos,g,pct(p.pre,'hc'),pct(p.pre,'ox'),pct(p.pre,'ni'),pct(p.post,'hc'),pct(p.post,'ox'),pct(p.post,'ni'),
+      iv.taller_completado?1:0,iv.taller_aciertos,iv.uso_total_s!=null?(iv.uso_total_s/60).toFixed(1):'',p.pre.duracion_s,p.post.duracion_s,p.pre.fin,p.post.fin]
+      .concat(ids.map(i=>p.pre.items.find(x=>x.item===i).correcto),ids.map(i=>p.post.items.find(x=>x.item===i).correcto));}));
+  descargar('GF_datos_ancho'+(simulado?'_SIMULADO':'')+'.csv',csv(f),'text/csv;charset=utf-8');
+};
+
+/* ---------- Datos de demostración (simulados, reproducibles) ---------- */
+$('demo').onclick=()=>{
+  const rnd=E.mulberry32(7),nrm=()=>Math.sqrt(-2*Math.log(rnd()+1e-12))*Math.cos(2*Math.PI*rnd());
+  const dif={I01:-0.6,I02:-0.3,I03:0,I04:0.2,I05:-0.2,I06:0.6,I07:0.9,I08:0.7,I09:1.4,I10:1.0,I11:0.5,I12:1.2,I13:0.9};
+  const ops=Object.keys(GRUPOS).filter(k=>k!=='inorganico');
+  const reg=(id,tipo,th,fecha,consent,extra)=>{
+    const orden=INSTRUMENTO.items.map(i=>i.id).sort(()=>rnd()-0.5);
+    const items=INSTRUMENTO.items.map(it=>{const p=1/13+(12/13)/(1+Math.exp(-(th-dif[it.id])));const ok=rnd()<p;
+      const resp=ok?it.grupo:(rnd()<(tipo==='pre'?0.35:0.1)?'nose':ops.filter(o=>o!==it.grupo)[Math.floor(rnd()*12)]);
+      return {item:it.id,molecula:LIB[it.clave].nombre,grupo:it.grupo,rama:GRUPOS[it.grupo].rama,ancla:it.ancla,respuesta:resp,correcto:resp===it.grupo?1:0,tiempo_ms:Math.round(15000+rnd()*40000),posicion:orden.indexOf(it.id)+1};});
+    const dur=Math.round(items.reduce((s,x)=>s+x.tiempo_ms,0)/1000)+20, fin=new Date(fecha.getTime()+dur*1000);
+    const r=Object.assign({app:'AVA-GF',version:'2.0',instrumento:INSTRUMENTO.id,tipo,id,grupo:'DEMO',consentimiento:consent,simulado:true,inicio:fecha.toISOString(),fin:fin.toISOString(),duracion_s:dur,orden,items,aciertos:items.reduce((s,x)=>s+x.correcto,0),total:13},extra||{});
+    return firmar(r);};
+  brutos=[];
+  for(let i=1;i<=30;i++){
+    const id='DEMO'+String(i).padStart(2,'0'), th=-1.3+0.8*nrm(), g=1.7+0.7*nrm();
+    const consent=i!==30, d0=new Date(2026,9,5,8,0), d1=new Date(2026,9,19,8,0);
+    brutos.push(reg(id,'pre',th,d0,consent));
+    if(i<=27||i===30){const tal=Math.max(4,Math.min(13,Math.round(8+2.5*nrm()+g)));
+      brutos.push(reg(id,'post',th+g,d1,consent,{intervencion:{taller_completado:i!==5,taller_aciertos:i!==5?tal:null,taller_fecha:null,uso_s:{},uso_total_s:Math.round(Math.max(8,40+20*nrm())*60)}}));}
+  }
+  brutos.push(brutos[2]); // un duplicado exacto (mismo archivo entregado dos veces)
+  archivos=58;simulado=true;$('aviso-demo').classList.remove('oculto');procesar();
+};
+</script></body></html>

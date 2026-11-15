@@ -1,0 +1,59 @@
+<!DOCTYPE html>
+<html lang="es"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Mi informe · AVA Grupos Funcionales</title><link rel="stylesheet" href="../css/estilo.css"></head><body><main>
+
+<div class="eti">Resultado del estudio</div>
+<h1>Mi informe: medición inicial y final</h1>
+<div id="vacio" class="aviso info oculto">Todavía no hay una prueba inicial registrada en este navegador. <a href="prueba-inicial.html">Presenta la Prueba inicial</a> o, si la presentaste en otro equipo, <label style="text-decoration:underline;cursor:pointer;color:var(--ni)">carga tu archivo<input type="file" id="imp" accept=".json,application/json" hidden></label>.</div>
+<div id="rep" class="oculto">
+ <p class="eti" id="quien"></p>
+ <div class="kpis" id="kpis"></div>
+ <div id="pend" class="aviso info oculto">Aún no presentas la <a href="prueba-final.html">Prueba final</a>. El informe muestra solo tu punto de partida.</div>
+ <div class="dos">
+  <div class="hoja">
+   <h3 style="margin-top:0">Por rama del árbol</h3>
+   <table class="tabla"><thead><tr><th>Rama</th><th class="num">Inicial</th><th class="num">Final</th></tr></thead><tbody id="tr"></tbody></table>
+  </div>
+  <div class="hoja">
+   <h3 style="margin-top:0">Descargas</h3>
+   <p><button class="btn" id="pdf">⬇ Descargar mi informe en PDF</button></p>
+   <p><button class="btn sec" id="json">⬇ Descargar mi archivo de respuestas (.json)</button></p>
+   <p class="eti">Entrega el archivo .json a tu docente: es el dato del estudio.</p>
+  </div>
+ </div>
+ <h2>Vista previa del PDF</h2>
+ <iframe class="pdf" id="prev" title="Vista previa del informe"></iframe>
+</div>
+<p class="noimp" style="margin-top:2rem"><button class="btn sec" id="reset" style="font-size:.75rem">Borrar los datos de este equipo (docente)</button></p>
+</main><script src="../lib/three.min.js"></script><script src="../js/config.js"></script><script src="../js/moleculas.js"></script><script src="../js/arbol.js"></script>
+<script src="../js/instrumento.js"></script><script src="../js/estadistica.js"></script><script src="../lib/jspdf.umd.min.js"></script><script src="../js/logos.js"></script><script src="../js/informes-pdf.js"></script><script>
+AVA_ARBOL.nav('informe.html');
+const {leer,guardar,borrar,RAMAS}=AVA_ARBOL,{validar,descargar}=AVA_INST;
+const $=id=>document.getElementById(id);
+function pintar(){
+  const pre=leer('pre'),post=leer('post');
+  if(!pre){$('vacio').classList.remove('oculto');$('rep').classList.add('oculto');return;}
+  $('vacio').classList.add('oculto');$('rep').classList.remove('oculto');
+  $('quien').textContent='Código '+pre.id+(pre.grupo?' · '+pre.grupo:'');
+  const g=post&&pre.aciertos<13?(post.aciertos-pre.aciertos)/(13-pre.aciertos):null;
+  $('kpis').innerHTML=`<div style="border-left:5px solid var(--pre)"><b>${pre.aciertos}/13</b><small>Prueba inicial</small></div>
+   <div style="border-left:5px solid var(--post)"><b>${post?post.aciertos+'/13':'—'}</b><small>Prueba final</small></div>
+   <div><b>${post?(post.aciertos-pre.aciertos>0?'+':'')+(post.aciertos-pre.aciertos):'—'}</b><small>Cambio</small></div>
+   <div><b>${g==null?'—':g.toFixed(2).replace('.',',')}</b><small>Ganancia normalizada g${g==null?'':' · nivel '+AVA_EST.nivelHake(g)}</small></div>`;
+  $('pend').classList.toggle('oculto',!!post);
+  const pct=(r,k)=>{const it=r.items.filter(x=>x.rama===k);return Math.round(100*it.reduce((s,x)=>s+x.correcto,0)/it.length)+' %';};
+  $('tr').innerHTML=['hc','ox','ni'].map(k=>`<tr><td><span class="chip ${k}">${RAMAS[k]}</span></td><td class="num">${pct(pre,k)}</td><td class="num">${post?pct(post,k):'—'}</td></tr>`).join('');
+  const doc=AVA_PDF.pdfIndividual(pre,post);
+  $('prev').src=URL.createObjectURL(doc.output('blob'));
+  $('pdf').onclick=()=>AVA_PDF.pdfIndividual(pre,post).save('Informe_GF_'+pre.id+'.pdf');
+  $('json').onclick=()=>descargar('GF_'+pre.id+(post?'_inicial-final':'_inicial')+'.json',JSON.stringify(post?[pre,post]:pre,null,1));
+}
+$('imp').onchange=e=>{const fl=e.target.files[0];if(!fl)return;fl.text().then(t=>{let d;try{d=JSON.parse(t);}catch(x){alert('Archivo no válido');return;}
+  const regs=Array.isArray(d)?d:[d];const pre=regs.find(r=>r&&r.tipo==='pre'&&!validar(r).length);
+  if(!pre){alert('El archivo no contiene una prueba inicial válida.');return;}guardar('pre',pre);
+  const post=regs.find(r=>r&&r.tipo==='post'&&r.id===pre.id&&!validar(r).length);if(post)guardar('post',post);pintar();});};
+$('reset').onclick=()=>{const c=prompt('Clave del docente para borrar las pruebas, el taller y el tiempo de uso guardados en este navegador:');
+  if(c===null)return;if(c!==(window.AVA_CONFIG||{}).CLAVE_DOCENTE){alert('Clave incorrecta.');return;}
+  if(confirm('¿Borrar todos los datos del AVA en este navegador?')){borrar();location.reload();}};
+pintar();
+</script></body></html>
